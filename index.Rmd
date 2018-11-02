@@ -1,7 +1,7 @@
 ---
 title: "IODS course project"
 output:
-  author:"Suvi"
+  author: "Suvi"
   html_document:
     theme: cosmo
     toc: true
