@@ -1,4 +1,5 @@
 
 # About the project
 
-*Write a short description about the course and add a link to your github repository here. This is an R markdown (.Rmd) file so you can use R markdown syntax. See the 'Useful links' page in the mooc area (chapter 1) for instructions.*
+* Introduction to open data science will surely help me with my work and studies. I'm looking forward of learning new things with R!
+My github repository: https://github.com/suviki/IODS-project *
