@@ -1,0 +1,131 @@
+# Chapter 3 - Data wrangling and logistic regression
+
+## Suvi Kivi 13.11.2018. This file shows what I have learned this week.
+
+# ANALYSIS # 
+
+## 2. Here is the data
+
+***
+```{r}
+alc2 <- read.table("http://s3.amazonaws.com/assets.datacamp.com/production/course_2218/datasets/alc.txt", sep=",", header=TRUE)
+
+```
+***
+
+***
+```{r echo=FALSE}
+str(alc2)
+```
+***
+
+- There are 382 obs and 35 variables in the dataset. Data describes students achievement in secondary education of two Portuguese schools. 
+- Data includes students grades and demographic, social and school related features. 
+- Data was collected by using school reports and questionnaires.
+
+## 3. How I assume that variables relates with alchol consumption?
+
+From the data I chose sex, age, Pstatus (parent's cohabitation status) and famsup (family educational support). Here is my own hypothesis of their relationship with alcohol consumption.
+
+- I assume that there is not so much correlation between sex and alcohol consumption
+- I assume that age correlates a bit with alcohol consumption. 
+
+***
+``` {r echo=FALSE}
+summary(alc2$age)
+```
+***
+
+The students age is between 15 and 22 and I guess that the age will slowly raise the alcohol consumption.
+
+- I assume that Pstatus correlates little with alcohol consumption. Students are young and their parents cohabitation status may have an impact to their behavior. 
+- I believe that the biggest correlation with alcohol consumtion is with famsup. My own hypothesis is that if there family supports student then the alcohol consumption is lesser.
+
+
+## 4. How the 4 chosen variables really relates with alcohol consumption?
+
+Here is numerically and graphically pointed how sex, age, Psatus and famsup corralates with alcohol consumption.
+
+***
+
+``` {r}
+library(dplyr)
+keep_columns <- c("sex","age","Pstatus", "famsup", "alc_use")
+alc3 <- select (alc2, one_of(keep_columns))
+```
+
+***
+
+### Sex
+```{r eval = FALSE}
+library(gmodels)
+library(ggplot2)
+sex <- CrossTable(alc3$sex, alc3$alc_use)
+```
+
+
+```{r echo=FALSE}
+library("knitr")
+library(ggplot2)
+g1 <- ggplot(data = alc3, aes(x = alc_use, fill=sex))
+g1 + geom_bar()
+```
+
+Looks like there is more alcohol use in men than in female. In female there is more often answers 1-2,5 and in male it more diffused. Looks like my hypothesis went wrong.
+
+***
+
+### Age
+
+```{r echo = FALSE}
+boxplot(alc_use~age,data=alc3, main="alcohol use ~ age ", xlab="Age", ylab="Alcohol use")
+```
+
+Box plots visualizes the 25th, 50th and 75th percentiles (the box), the typical range (the whiskers) and the outliers of a variable. At the age of 17-18 alcohol use is more common than in other age groups. 
+
+***
+
+### parents cohabitation status (Psatus) 
+
+```{r eval = FALSE}
+Pstatus <- CrossTable(alc3$Pstatus, alc3$alc_use)
+Pstatus
+```
+
+```{r echo = FALSE}
+library(ggplot2)
+g2 <- ggplot(data = alc3, aes(x = alc_use, fill=Pstatus))
+g2 + geom_bar()
+```
+
+There is not so much difference between those student whose parents are divorced to those whose parents are still together. The number of students whose parents are divorced is much less than students whose parents are together. My hypothesis went wrong.
+
+***
+
+***
+
+### family support (famsup)
+
+```{r eval = FALSE}
+famsup <- CrossTable(alc3$famsup, alc3$alc_use)
+famsup
+```
+
+```{r echo = FALSE}
+g3 <- ggplot(data = alc3, aes(x = alc_use, fill=famsup))
+g3 + geom_bar()
+```
+
+Family support seem to reduce alcohol consumption. In both groups (famsup_no/yes) the biggest group is alc_use=1 but the group of student who havent't had support get bigger even bigger than the other group when alc_use is 3,5. My hypothesis wasn't exactly right.
+
+***
+
+## 5. Logistic regression
+
+```{r echo = FALSE}
+m <- glm(high_use ~ sex + age + Pstatus + famsup - 1, data = alc2, family = "binomial")
+m
+coef(m)
+summary (m)
+anova(m, test="Chisq")
+```
