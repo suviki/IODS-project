@@ -1,0 +1,179 @@
+---
+title: "Chapter4: Clustering and classification"
+output: html_document
+---
+
+## 2. Loading data in
+
+```{r}
+
+library (MASS)
+data("Boston")
+str(Boston)
+dim(Boston)
+
+```
+
+There are 506 obs and 14 variables in the Boston-dataset. Data shows housing values in suburbs of Boston. It includes information for example about crime rates, rooms per dwellings and pupil-teacher ratio. Dataset is part of MASS-package which can be uploaded to R.
+
+ 
+## 3. Data overview
+
+```{r}
+summary(Boston)
+
+hist_rm <- hist(Boston$rm)
+
+```
+
+Data can be explored by summary information or graphical methods. For example average number of rooms per dwelling can be showed by histogram. The most common rooms/dwellings are 5,5-7.
+
+```{r}
+
+pairs(Boston)
+
+cor_matrix <- cor(Boston)
+cor_matrix
+
+library(corrplot)
+corrplot(cor_matrix)
+
+```
+
+
+If we explore the dataset by using corrplot we can see the correlations between variables. There is a big correlation for example rm (average number of rooms per dwelling) and medv (median value of owner-occupied homes). There isn't so much correlation for example between nos (nitrogen oxides concentration) and dis (weighted mean of distance to five Boston employment centres).
+
+## 4. Scaling data and dividing data to training/testing sets
+
+Let's scale the dataset and convert it to data frame class. As we can see from the summary-information, the data variables changed due to scaling process.
+
+```{r}
+
+Boston_scaled <- scale(Boston)
+summary(Boston_scaled)
+class(Boston_scaled)
+Boston_scaled2 <- as.data.frame(Boston_scaled)
+
+```
+
+
+```{r}
+
+summary(Boston_scaled2$crim)
+
+```
+
+```{r}
+
+quantile_vector <- quantile(Boston_scaled2$crim)
+quantile_vector
+
+crime <- cut(Boston_scaled2$crim, breaks = quantile_vector, include.lowest = TRUE)
+
+library(dplyr)
+
+Boston_scaled2 <- dplyr::select(Boston_scaled2, -crim)
+Boston_scaled2 <- data.frame(Boston_scaled2, crime)
+
+```
+
+Now the old crim variable is removed and a new scaled crime variable has been added.
+
+Let's divide the data to training set (80 % of the data) and testing set (20 % of the data).
+
+```{r}
+
+n <- nrow(Boston_scaled2)
+ind <- sample(n, size = n * 0.8)
+train <- Boston_scaled2 [ind,]
+test <- Boston_scaled2 [-ind,]
+
+```
+
+
+## 5. Linear discriminant analysis
+
+Next I will use linear discriminant analysis for classification. Analysis is used to find the combination of the variables that seperates the target variable classes. For this case the target variable is the crime variable and the predictor variables are all the other variables.
+
+```{r}
+lda.fit <- lda(crime ~ ., data=train)
+lda.fit
+
+lda.arrows <- function (x, myscale = 1, arrow_heads = 0.1,
+color = "orange", tex=0.75, choices = c(1,2)) {
+  heads <- coef (x)
+  arrows(x0 = 0, y0 = 0,
+        x1 = myscale * heads[,choices [1]],
+        x2 = myscale * heads[,choices [2]], col=color,
+lenght = arrow_heads)
+  text(myscale * heads[,choices], labels= row.names(heads),
+        cex = tex, col=color, pos=3)
+}
+
+classes <- as.numeric(train$crime)
+
+plot(lda.fit, dimen = 2, col = classes, pch = classes)
+lda.arrows(lda.fit, myscale = 1)
+
+```
+
+## 6. Predicting classes
+
+First I save the crime categories and remove the crime variable from the test dataset.
+
+```{r}
+
+crime_categories <- as.numeric(test$crime)
+
+library(dplyr)
+
+test_data <- dplyr::select(test, -crime)
+test_data <- data.frame(test_data, crime_categories)
+
+```
+
+Next it's time to predict the classes on the test data using LDA model. 
+
+
+```{r}
+
+lda.pred <- predict(lda.fit, newdata = test_data)
+
+table (correct = crime_categories, predicted = lda.pred$class)
+
+```
+
+As can be seen from the table, the classifier predicted crime rates quite well but not perfectly.
+
+## 7. k-means algorithm
+
+Let's first reload the Boston dataset and standardize it.
+
+```{r}
+
+library(MASS)
+data("Boston")
+Boston_stand <- scale(Boston)
+
+```
+
+Now when the data is scaled it's possible to get comparable distances between observations.
+
+```{r}
+
+dist <- dist(Boston_stand)
+summary(dist)
+
+dist_manhattan <- dist(Boston_stand, method = 'manhattan')
+summary(dist_manhattan)
+```
+
+K-means is a clustering method and now I'm going to use it to assign observations of scaled Boston data to groups based on similarity. 
+
+```{r}
+kmeans <- kmeans(Boston_stand, centers = 3)
+
+pairs(Boston_stand, col = kmeans$cluster)
+```
+
+
