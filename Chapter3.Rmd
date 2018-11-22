@@ -3,9 +3,7 @@ title: "Chapter 3: Logistic regression"
 output: html_document
 ---
 
-## Suvi Kivi 13.11.2018. This file shows what I have learned this week.
-
-# ANALYSIS # 
+# Chapter 3: Logistic regression 
 
 ## 2. Here is the data
 

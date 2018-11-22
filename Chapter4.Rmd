@@ -1,7 +1,8 @@
 ---
-title: "Chapter4: Clustering and classification"
+title: "Chapter 4: Clustering and classification"
 output: html_document
 ---
+# Chapter 4: Clustering and classification
 
 ## 2. Loading data in
 

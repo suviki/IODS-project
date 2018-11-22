@@ -3,10 +3,7 @@ title: "Chapter2: Regression and model validation"
 output: html_document
 ---
 
-# Suvi Kivi 11.11.2018. This file shows what I have learned this week!
-
-
-# ANALYSIS #
+#  Chapter 2: Regression and model validation
 
 ## 1. Loading data in
 
