@@ -1,0 +1,124 @@
+---
+title: "Chapter 5: Dimensionality reduction techniques"
+output: html_document
+---
+
+#  Chapter 2: Dimensionality reduction techniques
+
+## Loading data in
+```{r}
+setwd("/Users/suvi/Documents/GitHub/IODS-project")
+human <- read.csv("/Users/suvi/Documents/GitHub/IODS-project/Data/human3.csv", header = TRUE, sep = ",")
+rownames(X) <- human$X
+keep <- c("EduRatio", "Labratio", "EduExp", "LifeExp", "GNI", "MMRatio", "ABirthR", "RepPar")
+human <- select(human, one_of(keep))
+```
+
+## 1. Data overview
+
+```{r}
+
+summary(human)
+
+```
+
+Data has now (after data wrangling) 155 obs and 8 variables. Data captures part of human development entails. Data provides an overview of key aspects of human development.
+
+```{r}
+
+library(GGally)
+ggpairs(human)
+cor(human) %>% corrplot
+```
+
+Looks like there is a strong correlation between LifeExp (Life Expectancy at Birth) and EduExp (Expected Years of Education). There isn't so much correlation for example with LifeExp and MMRatio (Maternal MortalityRatio), which makes sense.
+
+## 2. Principal component analysis (PCA) for not standardized data
+
+Here is a biplot of pca_human data.
+
+```{r}
+
+pca_human <- prcomp(human)
+
+biplot (pca_human, choices = 1:2, cex = c(0.8, 1), col = c("grey40", "deeppink2"))
+
+```
+
+
+## 3. Principal component analysis (PCA) for standardized data
+
+First I standardize the dataset.
+
+```{r}
+
+human_std <- scale(human)
+summary(human_std)
+
+```
+
+And here is a biplot of standardized pca_human dataset.
+
+```{r}
+
+pca_human_std <- prcomp(human_std)
+
+biplot (pca_human_std, choices = 1:2, cex = c(0.8, 1), col = c("grey40", "deeppink2"))
+
+```
+
+As we can see, the biplots looks different. PC1 is different in standardized data than in non-standardized dataset. PC1 and PC2 in biplots diplays the observations by the first two principal components. 
+
+## 4. My personal interpretation of the first two principal components
+
+A biplot is plot which aims to represent both the observations and variables of a matrix of multivariate data on the same plot.
+
+PCA  transforms the coordinate system and the new components are principal components. The origin of the new coordinate system is located in the center of the datapoints. The first PC points the direction of the highest variance and the second points the second highest. 
+
+As can be seen from the biplots above, there is difference. If the data is not standardized variables measured at different scales do not contribute equally to the analysis. 
+
+If the arrows are near to each other, there is correlation between them. What is noticed already, there is a strong correlation for example between LifeExp and EduExp and not so much correlation between LifeExp and MMRatio.
+
+
+## 5. Multiple Correspondence Analysis (MCA)
+
+```{r}
+
+library(FactoMineR)
+data("tea")
+
+str(tea)
+dim(tea)
+
+```
+
+I reduce the number of variables to six. For that I create a new dataset tea2.
+
+```{r}
+
+keep_colums <- c("breakfast", "tea.time", "evening", "lunch", "dinner", "always")
+tea2 <- select(tea, one_of(keep_colums))
+str(tea2)
+dim(tea2)
+
+```
+
+And here is the data visualized.
+```{r}
+
+library(tidyr)
+
+gather(tea2) %>% ggplot(aes(value)) + facet_wrap("key", scales = "free") + geom_bar() + theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8))
+
+```
+
+
+```{r}
+
+tea2_mca <- MCA(tea2, graph = FALSE)
+summary(tea2_mca)
+
+plot(tea2_mca, invisible=c("ind"), habillage = "quali")
+```
+
+As can be seen from the picture, the variables are drawn on the first two dimensions. The distance between variable categories gives a measure of their similarity. Looks like tea time, not always and breakfast are quite similar. Dinner differs the most from the other variables.
