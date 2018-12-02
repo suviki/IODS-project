@@ -3,15 +3,16 @@ title: "Chapter 5: Dimensionality reduction techniques"
 output: html_document
 ---
 
-#  Chapter 2: Dimensionality reduction techniques
+#  Chapter 5: Dimensionality reduction techniques
 
 ## Loading data in
 ```{r}
+library(dplyr)
 setwd("/Users/suvi/Documents/GitHub/IODS-project")
 human <- read.csv("/Users/suvi/Documents/GitHub/IODS-project/Data/human3.csv", header = TRUE, sep = ",")
-rownames(X) <- human$X
+rownames(human) <- human$X
 keep <- c("EduRatio", "Labratio", "EduExp", "LifeExp", "GNI", "MMRatio", "ABirthR", "RepPar")
-human <- select(human, one_of(keep))
+human <- dplyr::select(human, one_of(keep))
 ```
 
 ## 1. Data overview
@@ -95,9 +96,9 @@ dim(tea)
 I reduce the number of variables to six. For that I create a new dataset tea2.
 
 ```{r}
-
-keep_colums <- c("breakfast", "tea.time", "evening", "lunch", "dinner", "always")
-tea2 <- select(tea, one_of(keep_colums))
+library(dplyr)
+keep_columns <- c("breakfast", "tea.time", "evening", "lunch", "dinner", "always")
+tea2 <- dplyr::select(tea, one_of(keep_columns))
 str(tea2)
 dim(tea2)
 
@@ -121,4 +122,4 @@ summary(tea2_mca)
 plot(tea2_mca, invisible=c("ind"), habillage = "quali")
 ```
 
-As can be seen from the picture, the variables are drawn on the first two dimensions. The distance between variable categories gives a measure of their similarity. Looks like tea time, not always and breakfast are quite similar. Dinner differs the most from the other variables.
+As can be seen from the picture, the variables are drawn on the first two dimensions. The distance between variable categories gives a measure of their similarity. Looks like evening and always are quite similar. Dinner differs the most from the other variables.
