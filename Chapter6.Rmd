@@ -153,7 +153,7 @@ anova(fit)
 
 ```
 
-As can be seen from the Anova test result, the difference is not statistically significant. 
+As can be seen from the Anova test result, the group difference is not statistically significant. 
 
 
 ## 2. Analysis of BPRSL dataset
@@ -203,6 +203,7 @@ BPRSL_reg <- lm(bprs ~ week + treatment, data = BPRSL)
 summary(BPRSL_reg)
 ```
 
+If we look at the p-values, week has a small value which indicates statistical significance. Treatment2 has a p-value bigger than 0,05. 
 
 ### The random intercept model
 
@@ -218,6 +219,8 @@ BPRSL_ref <- lmer(bprs ~ week + treatment + (1 | subject), data = BPRSL, REML = 
 
 summary(BPRSL_ref)
 ```
+
+Fitting a random intercept model allows the linear regression fit for each individual. T-value looks to be -10 with week variable, which indicates statistical significance.
 
 ### Random intercept and random slope model
 
