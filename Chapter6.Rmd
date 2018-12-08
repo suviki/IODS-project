@@ -1,0 +1,281 @@
+---
+title: "Chapter 6: Analysis of longitudinal data"
+output: html_document
+---
+
+#  Chapter 6: Analysis of longitudinal data
+
+## Loading the datasets
+
+```{r}
+
+BPRSL <- read.csv("/Users/suvi/Documents/GitHub/IODS-project/Data/bprsl.csv", header = TRUE, sep = ",")
+
+RATSL <- read.csv("/Users/suvi/Documents/GitHub/IODS-project/Data/ratsl.csv", header = TRUE, sep = ",")
+```
+
+## 1. Analysis of RATSL dataset
+
+### Graphical display
+
+```{r}
+
+library(ggplot2)
+
+ggplot(RATSL, aes(x = WD, y = rats, linetype = as.factor(ID))) +
+  geom_line() +
+  scale_linetype_manual(values = rep(1:10, times=4)) +
+  facet_grid(. ~ as.factor(Group), labeller = label_both) +
+  theme(legend.position = "none") + 
+  scale_y_continuous(limits = c(min(RATSL$rats), max(RATSL$rats)))
+
+```
+
+There are differences between groups as can be seen from the upper picture. Let's see what happens if we standardize the data and draw the plot again.
+
+```{r}
+
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+
+RATSLS <- RATSL %>%
+  group_by(WD) %>%
+  mutate(stdrats = (rats - mean(rats))/sd(rats) ) %>%
+  ungroup()
+
+glimpse(RATSLS)
+
+ggplot(RATSLS, aes(x = WD, y = stdrats, linetype = as.factor(ID))) +
+  geom_line() +
+  scale_linetype_manual(values = rep(1:10, times=4)) +
+  facet_grid(. ~ as.factor(Group), labeller = label_both) +
+  scale_y_continuous(name = "standardized rats")
+
+```
+
+Differences between groups are still clear when pictures are drawn with standardized rats.
+
+### Summary measure
+
+```{r}
+
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+
+n <- RATSL$WD %>% unique() %>% length()
+
+RATSLU <- RATSL %>%
+  group_by(Group, WD) %>%
+  summarise( mean = mean(rats), se = sd(rats/sqrt(n) )) %>%
+  ungroup()
+
+glimpse(RATSLU)
+
+ggplot(RATSLU, aes(x = WD, y = mean, linetype = as.factor(Group), shape = as.factor(Group))) +
+  geom_line() +
+  scale_linetype_manual(values = c(1,2,3)) +
+  geom_point(size=3) +
+  scale_shape_manual(values = c(1,2,3)) +
+  geom_errorbar(aes(ymin = mean - se, ymax = mean + se, linetype="1"), width=0.3) +
+  theme(legend.position = c(0.8,0.8)) +
+  scale_y_continuous(name = "mean(rats) +/- se(rats)")
+
+```
+
+
+The plot shows the mean response profiles for every group. As can be seen, group one is different from the other groups. 
+
+### Find out the outlier
+
+
+```{r}
+
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+
+RATSLfilt <- RATSL %>%
+  filter( WD > 1) %>%
+  group_by(Group, ID) %>%
+  summarise( mean=mean(rats) ) %>%
+  ungroup()
+
+glimpse(RATSLfilt)
+
+ggplot(RATSLfilt, aes(x = as.factor(Group), y = mean)) +
+  geom_boxplot() +
+  stat_summary(fun.y = "mean", geom = "point", shape=23, size=4, fill = "white") +
+  scale_y_continuous(name = "mean(rats), groups")
+```
+
+Here is a boxplot of the mean versus groups. 
+
+I create a new dataset by filtering the outlier and then I'll try to draw the same boxplot again.
+
+```{r}
+
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+
+RATSLfilt2 <- RATSLfilt %>%
+  filter(mean > 300)
+
+ggplot(RATSLfilt2, aes(x = as.factor(Group), y = mean)) +
+  geom_boxplot() +
+  stat_summary(fun.y = "mean", geom = "point", shape=23, size=4, fill = "white") +
+  scale_y_continuous(name = "mean(rats), groups")
+
+```
+
+I filtered the data with mean>300 and group 1 disappeared. So there is only groups 2 and 3 and the boxplot shows the rats means versus those groups.
+
+### Anova test
+
+```{r}
+
+RATS <- read.table("https://raw.githubusercontent.com/KimmoVehkalahti/MABS/master/Examples/data/rats.txt", header = T)
+
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+
+t.test(mean ~ Group, data = RATSLfilt2, var.equal = TRUE)
+
+RATSAN <- RATSLfilt %>%
+  mutate(baseline = RATS$WD1)
+
+fit <- lm(mean ~ baseline + as.factor(Group), data = RATSAN)
+
+anova(fit)
+
+```
+
+As can be seen from the Anova test result, the difference is not statistically significant. 
+
+
+## 2. Analysis of BPRSL dataset
+
+Data is already in and it is in a long format model. I'll change the variables treatment and subject to factors.
+
+```{r}
+
+library(dplyr)
+
+BPRSL$treatment <- factor(BPRSL$treatment)
+BPRSL$subject <- factor(BPRSL$subject)
+
+glimpse(BPRSL)
+```
+
+### Graphical display
+
+```{r}
+
+library(dplyr)
+library(tidyr)
+
+dim(BPRSL)
+
+ggplot(BPRSL, aes(x = week, y = bprs, linetype = subject)) +
+  geom_line() +
+  scale_linetype_manual(values = rep(1:10, times=4)) +
+  facet_grid(. ~ treatment, labeller = label_both) +
+  theme(legend.position = "none") + 
+  scale_y_continuous(limits = c(min(BPRSL$bprs), max(BPRSL$bprs)))
+
+```
+
+
+### The linear model
+
+Next I will fit a multiple linear regression model with bprs as response and week and treatment as explanatory variables.
+
+```{r}
+
+library(dplyr)
+library(tidyr)
+
+BPRSL_reg <- lm(bprs ~ week + treatment, data = BPRSL)
+
+summary(BPRSL_reg)
+```
+
+
+### The random intercept model
+
+Next I will fit the random intercept model for the same two explanatory variables. 
+
+```{r}
+
+library(dplyr)
+library(tidyr)
+library(lme4)
+
+BPRSL_ref <- lmer(bprs ~ week + treatment + (1 | subject), data = BPRSL, REML = FALSE)
+
+summary(BPRSL_ref)
+```
+
+### Random intercept and random slope model
+
+Next I'm able to fit the random intercept and random slope model to the dataset. Fitting a random intercept and random slope model allows the linear regression fits for each individual to differ in intercept but also in slope. 
+
+
+```{r}
+
+library(dplyr)
+library(tidyr)
+library(lme4)
+library(ggplot2)
+
+BPRSL_ref1 <- lmer(bprs ~ week + treatment + (week | subject), data = BPRSL, REML = FALSE)
+
+summary(BPRSL_ref1)
+
+anova(BPRSL_ref1, BPRSL_ref)
+```
+
+
+
+### Random intercept and random slope model with interaction
+
+Finally, I can fit a random intercept and slope model that allows for a treatment × week interaction.
+
+```{r}
+
+library(dplyr)
+library(tidyr)
+library(lme4)
+library(ggplot2)
+
+BPRSL_ref2 <- lmer(bprs ~ week * treatment + (week | subject), data = BPRSL, REML = FALSE)
+
+summary(BPRSL_ref2)
+
+anova(BPRSL_ref2, BPRSL_ref1)
+
+ggplot(BPRSL, aes(x = week, y = bprs, group = treatment)) +
+  geom_line(aes(linetype = treatment)) +
+  scale_x_continuous(name = "Weeks", breaks = seq(0, 60, 20)) +
+  scale_y_continuous(name = "Bprs") +
+  theme(legend.position = "top")
+
+Fitted <- fitted(BPRSL_ref2)
+
+BPRSL <- BPRSL %>%
+  mutate(Fitted)
+
+ggplot(BPRSL, aes(x = week, y = Fitted, group = treatment)) +
+  geom_line(aes(linetype = treatment)) +
+  scale_x_continuous(name = "Weeks", breaks = seq(0, 60, 20)) +
+  scale_y_continuous(name = "Bprs") +
+  theme(legend.position = "top")
+
+```
+
+
+
+
